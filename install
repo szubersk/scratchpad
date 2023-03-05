@@ -22,3 +22,5 @@ mount $mnt
 
 reg add HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters /v AllowInsecureGuestAuth /t REG_DWORD /d 1 /f
 net use Z: \\172.31.19.223\nfs /persistent:yes
+
+- enable 137/UDP 138/UDP 139/TCP 445/TCP
