@@ -1,0 +1,26 @@
+yum -y install nfs-utils samba
+systemctl enable smb.service
+
+opt=nfs
+dev=./b
+mnt=/srv/$opt
+mkdir -p $mnt
+chown -R nfsnobody:nfsnobody $mnt
+
+yum -y install btrfs-progs
+mkfs.btrfs --force --nodiscard --metadata dup --label $opt --features no-holes $dev
+mount b $mnt
+btrfs subvolume create $mnt/root
+btrfs subvolume set-default $mnt/root
+chown -R nfsnobody:nfsnobody $mnt
+umount $mnt
+
+eval "$(blkid -o export $dev)"
+echo "UUID=$UUID $mnt btrfs autodefrag,compress=zstd:1,lazytime,noatime,user_subvol_rm_allowed" >> /etc/fstab
+umount $mnt
+mount $mnt
+
+reg add HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters /v AllowInsecureGuestAuth /t REG_DWORD /d 1 /f
+net use Z: \\172.31.19.223\nfs /persistent:yes
+
+- enable 137/UDP 138/UDP 139/TCP 445/TCP
