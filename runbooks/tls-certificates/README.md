@@ -1,17 +1,21 @@
 # TLS certificates generation
 
 ## Self-signed certificate
-TODO
+```bash
+openssl req -new -newkey rsa:4096 -nodes -x509 -sha256 -days 365 -keyout ss.key -out ss.pem -subj '/CN=SelfSigned' -addext 'subjectAltName = DNS.1:selfsigned.example.com'
+```
 
-## Certificate Authorities
-
-### Generate CA key
-openssl genrsa -out ca.key 4096
-
-### Generate CA certificate
-openssl req -new -nodes -days 3650 -sha256 -x509 -key ./ca.key -out ./ca.pem -config ./ca.conf -subj '/CN=My Certificate Authority'
+## CA certificate
+```bash
+openssl req -new -newkey rsa:4096 -nodes -x509 -sha256 -addext 'authorityKeyIdentifier = keyid,issuer' -addext 'basicConstraints = critical,CA:true' -addext 'keyUsage = critical,keyCertSign,cRLSign' -addext 'subjectKeyIdentifier = hash' -days 3650 -keyout ca.key -out ca.pem -subj '/CN=MyCaAuthority'
+```
 
 ## Server certificate
-openssl genrsa -out server.key 4096
-openssl req -new -nodes -key ./server.key -out ./server.csr -config ./server.conf -subj '/CN=My Server'
-openssl x509 -req -sha256 -days 365 -CA ca.pem -CAkey ca.key -CAcreateserial -copy\_extensions copyall -in server.csr -out server.pem
+```bash
+openssl req -new -newkey rsa:4096 -nodes -x509 -sha256 -addext 'basicConstraints = CA:false' -addext 'extendedKeyUsage = serverAuth' -addext 'keyUsage = digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment' -addext 'subjectKeyIdentifier = hash' -CA ca.pem -CAkey ca.key -days 365 -keyout server.key -out server.pem -subj '/CN=MyServer' -addext 'subjectAltName = DNS.1:mydnsname.example.com, URI:myuri'
+```
+
+## Client certificate
+```bash
+openssl req -new -newkey rsa:4096 -nodes -x509 -sha256 -addext 'basicConstraints = CA:false' -addext 'extendedKeyUsage = clientAuth' -addext 'keyUsage = digitalSignature,nonRepudiation,keyEncipherment,dataEncipherment' -addext 'subjectKeyIdentifier = hash' -CA ca.pem -CAkey ca.key -days 365 -keyout client.key -out client.pem -subj '/CN=MyClient' -addext 'subjectAltName = DNS.1:mydnsname.example.com, URI:myuri'
+```
