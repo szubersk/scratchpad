@@ -18,4 +18,6 @@
 
 * Set up a budget.
 
+* Enable Cost Explorer https://docs.aws.amazon.com/cost-management/latest/userguide/ce-enable.html
+
 * Create IAM admin user.
