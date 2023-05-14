@@ -9,15 +9,38 @@
     Add 2 at least 2 MFA devices.
 
 * Go to menu in the top-right section of the screen, click `Billing Dashboard`
-  * Go to `Billing preferences`. Enable:
-    - `Receive PDF Invoice By Email`
-    - `Receive Free Tier Usage Alerts`
-    - `Receive Billing Alerts`
-    Disable:
-    - `Disable credit sharing`
+  * Go to `Billing preferences`. Set:
+    - [x] `Receive PDF Invoice By Email`
+    - [x] `Receive Free Tier Usage Alerts`
+    - [x] `Receive Billing Alerts`
+    - [ ] `Disable credit sharing`
+
+* Enable [Cost Explorer](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-enable.html)
 
 * Set up a budget.
 
-* Enable Cost Explorer https://docs.aws.amazon.com/cost-management/latest/userguide/ce-enable.html
+* Add the following SCP to the root of the organisation.
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "aws:PrincipalArn": "arn:aws:iam::*:root"
+        }
+      }
+    }
+  ]
+}
+```
+
+* Enable AWS Compute Optimizer
+```
+aws compute-optimizer update-enrollment-status --status Active --include-member-accounts
+```
 
 * Create IAM admin user.
