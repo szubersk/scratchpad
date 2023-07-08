@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import hashlib
 import io
 import os
 import subprocess
@@ -17,31 +18,41 @@ def check_version(file, expected_version):
         return False
 
 
-def execute_terraform(candidates, version):
-    for c in candidates:
-        if check_version(c, version):
-            os.execvp(c, sys.argv[1:])
+def execute_terraform(store, version):
+    binary = f"{store}/{version}/terraform"
+
+    if check_version(binary, version):
+        os.execvp(binary, sys.argv[1:])
 
 
-def download_terraform(version, store):
+def download_terraform(store, version, expected_checksum=None):
     url = f"https://releases.hashicorp.com/terraform/{version}/terraform_{version}_linux_amd64.zip"
     print(f"Downloading {url}")
+    data = io.BytesIO(urllib.request.urlopen(url).read())
 
-    with zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(url).read())) as f:
-        os.makedirs(f"{store}/{version}", exist_ok=True)
+    if expected_checksum:
+        checksum = hashlib.sha256(data.read()).hexdigest()
+        data.seek(0)
+
+    with zipfile.ZipFile(data) as f:
+        if expected_checksum and expected_checksum != checksum:
+            print(f"Incorrect checksum: {expected_checksum} != {checksum}")
+            return
+
         f.extract("terraform", f"{store}/{version}")
         os.chmod(f"{store}/{version}/terraform", 0o0755)
 
 
 def main():
-    version = sys.argv[1].removeprefix("--version=")
+    store = f"{os.environ.get('TMPDIR', '/tmp')}/terraform-bin"
+    expected_checksum = os.environ.get('TERRAFORM_CHECKSUM', None)
+    version = os.environ.get('TERRAFORM_VERSION', '1.3.9')
+    os.makedirs(store, exist_ok=True)
 
-    store = f"{os.environ['TMPDIR']}/terraform-bin"
-    binaries = ["terraform", f"{store}/{version}/terraform"]
-
-    execute_terraform(binaries, version)
-    download_terraform(version, store)
-    execute_terraform(binaries, version)
+    execute_terraform(store, version)
+    download_terraform(store, version, expected_checksum)
+    execute_terraform(store, version)
+    print("Failed to execute terraform binary!")
 
     return 1
 
